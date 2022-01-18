@@ -12,6 +12,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.4.2"
+    "@truffle/hdwallet-provider": "^2.0.0",
+    "openzeppelin-solidity": "^4.4.2"
   }
 }
