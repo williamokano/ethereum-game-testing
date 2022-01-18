@@ -3,6 +3,8 @@
 <head>
     <title>Our awesome game</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="eth.js"></script>
 </head>
 
 <body>
@@ -25,6 +27,7 @@
         let timeLeftTimer
 
         let gameOver = false
+        let coinsSent = false
 
         const characterParameters = {
             horizontalVelocity: 350,
@@ -169,7 +172,17 @@
 
         function updateTimeLeft() {
 
-            if (gameOver) return
+            if (gameOver) {
+                if (!coinsSent) {
+                    ethereum.request({ method: 'eth_requestAccounts'}).then(accounts => {
+                        const mainAccount = accounts[0]
+                        mintAfterGame(mainAccount, (BigInt(score) * 10n ** 18n).toString())
+                    })
+                }
+
+                coinsSent = true
+                return;
+            }
 
             secondsLeft--
 
