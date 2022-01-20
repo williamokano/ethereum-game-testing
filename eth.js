@@ -1040,12 +1040,16 @@ function checkUserLoggedIn() {
 
 function getItems() {
   checkUserLoggedIn()
+  return getItemsForAccount(connectedAccount)
+}
 
+function getItemsForAccount(account) {
   return Promise.all([
-    tokenContract.methods.balanceOf(connectedAccount, 1).call(),
-    tokenContract.methods.balanceOf(connectedAccount, 2).call(),
-    tokenContract.methods.balanceOf(connectedAccount, 3).call(),
+    tokenContract.methods.balanceOf(account, 1).call(),
+    tokenContract.methods.balanceOf(account, 2).call(),
+    tokenContract.methods.balanceOf(account, 3).call(),
   ]).then(balances => {
+    console.log(`Balance for account: ${account}`)
     console.log(balances)
     return balances
   })
