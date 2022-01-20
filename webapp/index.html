@@ -8,8 +8,10 @@
 </head>
 
 <body>
-    <h1>Our awesome game</h1>
-    <h2>this is just a H2</h2>
+    <h1>PUMP YOUR BAG</h1>
+    <button onClick="buy(1)">Buy Pump Talisman, 0.001 BNB</button>
+    <button onClick="buy(2)">Buy Super Boots, 0.002 BNB</button>
+    <button onClick="buy(3)">Buy Time Warp Cape, 0.003 BNB</button>
 
     <script>
 
@@ -27,7 +29,17 @@
         let timeLeftTimer
 
         let gameOver = false
-        let coinsSent = false
+
+        const gameItems = {
+            talismans: 0,
+            boots: 0,
+            capes: 0,
+        }
+
+        const gameParameters = {
+            coinGenerationInterval: 3000,
+            gameSeconds: 1000,
+        }
 
         const characterParameters = {
             horizontalVelocity: 350,
@@ -52,11 +64,41 @@
                 },
             },
         }
+        
+        let game
 
-        const game = new Phaser.Game(config)
+        connectedAccountPromise.then(accounts => {
+            console.log(`Game started with accounts: ${accounts}`)
+            getItems().then(balances => {
+                console.log(`Game loaded with item balance: ${balances}`)
+
+                configureParameters(balances)
+
+                game = new Phaser.Game(config)
+            })
+        })
+
+        function afterBuyCallback() {
+            getItems().then(configureParameters)
+        }
+
+        function configureParameters(balances) {
+            const [ TALISMAN_QTT, BOOTS_QTT, CAPES_QTT ] = balances
+            gameItems.boots = parseInt(BOOTS_QTT, 10)
+            gameItems.capes = parseInt(CAPES_QTT, 10)
+            gameItems.talismans = parseInt(TALISMAN_QTT, 10)
+
+            gameParameters.coinGenerationInterval *= Math.pow(0.75, gameItems.talismans)
+            gameParameters.gameSeconds *= Math.pow(0.7, gameItems.capes)
+            characterParameters.horizontalVelocity *= Math.pow(1.1, gameItems.boots)
+
+            console.log(`Configured parameters`)
+            console.table({...gameParameters, ...characterParameters, ...gameItems})
+        }
 
         // loading assets
         function gamePreload() {
+
             this.load.image('knight', 'assets/knight.png')
             this.load.image('crate', 'assets/crate.png')
             this.load.image('background', 'assets/background.png')
@@ -146,14 +188,14 @@
             cursors = this.input.keyboard.createCursorKeys()
 
             coinTimer = this.time.addEvent({
-                delay: Phaser.Math.Between(0, 5000),
+                delay: gameParameters.coinGenerationInterval,
                 callback: generateCoins,
                 callbackScope: this,
                 repeat: -1,
             })
 
             timeLeftTimer = this.time.addEvent({
-                delay: 1000,
+                delay: gameParameters.gameSeconds,
                 callback: updateTimeLeft,
                 callbackScope: this,
                 repeat: -1,
@@ -173,14 +215,6 @@
         function updateTimeLeft() {
 
             if (gameOver) {
-                if (!coinsSent) {
-                    ethereum.request({ method: 'eth_requestAccounts'}).then(accounts => {
-                        const mainAccount = accounts[0]
-                        mintAfterGame(mainAccount, (BigInt(score) * 10n ** 18n).toString())
-                    })
-                }
-
-                coinsSent = true
                 return;
             }
 

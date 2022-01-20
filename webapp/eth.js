@@ -1,4 +1,6 @@
-ethereum.request({method: 'eth_requestAccounts'})
+let connectedAccount;
+const connectedAccountPromise = ethereum.request({method: 'eth_requestAccounts'})
+  .then(accounts => connectedAccount = accounts[0])
 window.web3 = new Web3(window.ethereum)
 
 
@@ -1029,10 +1031,43 @@ const tokenAbi = [
 const tokenContract = new web3.eth.Contract(tokenAbi, tokenAddress)
 const marketplaceContract = new web3.eth.Contract(marketplaceAbi, marketplaceAddress)
 
-function mintAfterGame(address, nrOfTokens) {
-    tokenContract.methods.mint(address, nrOfTokens).send({
-        from: address,
-    }).on('receipt', receipt => {
-        alert('Transaction complete')
+function checkUserLoggedIn() {
+  if (connectedAccount == undefined) {
+    console.log('No connected account brother')
+    throw Error('User is not logged in')
+  }
+}
+
+function getItems() {
+  checkUserLoggedIn()
+
+  return Promise.all([
+    tokenContract.methods.balanceOf(connectedAccount, 1).call(),
+    tokenContract.methods.balanceOf(connectedAccount, 2).call(),
+    tokenContract.methods.balanceOf(connectedAccount, 3).call(),
+  ]).then(balances => {
+    console.log(balances)
+    return balances
+  })
+}
+
+function buy(id) {
+
+  checkUserLoggedIn()
+
+  const buyTokenOptions = {
+      from: connectedAccount,
+      value: 0,
+  }
+
+  marketplaceContract.methods.price(id).call().then(price => {
+    console.log(`Price returned: ${web3.utils.fromWei(price.toString())}`)
+    buyTokenOptions.value = price
+
+    marketplaceContract.methods.buyToken(id).send(buyTokenOptions)
+    .on('receipt', receipt => {
+        afterBuyCallback()
+        console.log('Transaction complete')
     })
+  })
 }
