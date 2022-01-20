@@ -9,9 +9,9 @@
 
 <body>
     <h1>PUMP YOUR BAG</h1>
-    <button onClick="buy(1)">Buy Pump Talisman, 0.001 BNB</button>
-    <button onClick="buy(2)">Buy Super Boots, 0.002 BNB</button>
-    <button onClick="buy(3)">Buy Time Warp Cape, 0.003 BNB</button>
+    <button onClick="buy(1)">Buy Pump Talisman, 0.001 BNB</button><br/>
+    <button onClick="buy(2)">Buy Super Boots, 0.002 BNB</button><br/>
+    <button onClick="buy(3)">Buy Time Warp Cape, 0.003 BNB</button><br/>
 
     <script>
 
@@ -24,7 +24,7 @@
         let score = 0
         let scoreText
 
-        let secondsLeft = 60
+        let secondsPassed = 0
         let timeLeftText
         let timeLeftTimer
 
@@ -38,13 +38,15 @@
 
         const gameParameters = {
             coinGenerationInterval: 3000,
-            gameSeconds: 1000,
+            gameSeconds: 60,
         }
 
         const characterParameters = {
             horizontalVelocity: 350,
             jumpForce: -600,
         }
+
+        const baseParameters = { ...gameParameters, ...characterParameters }
 
         // configure the game
         const config = {
@@ -88,9 +90,9 @@
             gameItems.capes = parseInt(CAPES_QTT, 10)
             gameItems.talismans = parseInt(TALISMAN_QTT, 10)
 
-            gameParameters.coinGenerationInterval *= Math.pow(0.75, gameItems.talismans)
-            gameParameters.gameSeconds *= Math.pow(0.7, gameItems.capes)
-            characterParameters.horizontalVelocity *= Math.pow(1.1, gameItems.boots)
+            gameParameters.coinGenerationInterval = baseParameters.coinGenerationInterval * Math.pow(0.75, gameItems.talismans)
+            gameParameters.gameSeconds = parseInt(baseParameters.gameSeconds * Math.pow(1.3, gameItems.capes), 10)
+            characterParameters.horizontalVelocity = baseParameters.horizontalVelocity * Math.pow(1.1, gameItems.boots)
 
             console.log(`Configured parameters`)
             console.table({...gameParameters, ...characterParameters, ...gameItems})
@@ -195,7 +197,7 @@
             })
 
             timeLeftTimer = this.time.addEvent({
-                delay: gameParameters.gameSeconds,
+                delay: 1000,
                 callback: updateTimeLeft,
                 callbackScope: this,
                 repeat: -1,
@@ -206,7 +208,8 @@
                 fill: '#000',
             })
 
-            timeLeftText = this.add.text(16, 46, secondsLeft.toString() + ' seconds left', {
+            const timeLeft = gameParameters.gameSeconds - secondsPassed
+            timeLeftText = this.add.text(16, 46, timeLeft.toString() + ' seconds left', {
                 fontSize: '32px',
                 fill: '#f00',
             })
@@ -218,15 +221,16 @@
                 return;
             }
 
-            secondsLeft--
+            secondsPassed++
 
             // "Guard return terminate game"
-            if (secondsLeft <= 0) {
+            if (secondsPassed >= gameParameters.gameSeconds) {
                 this.physics.pause()
                 gameOver = true
             }
 
-            timeLeftText.setText(secondsLeft.toString() + ' seconds left')
+            const timeLeft = gameParameters.gameSeconds - secondsPassed
+            timeLeftText.setText(timeLeft.toString() + ' seconds left')
         }
 
         function generateCoins() {
