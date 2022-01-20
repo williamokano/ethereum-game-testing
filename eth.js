@@ -3,7 +3,6 @@ const connectedAccountPromise = ethereum.request({method: 'eth_requestAccounts'}
   .then(accounts => connectedAccount = accounts[0])
 window.web3 = new Web3(window.ethereum)
 
-
 const tokenAddress = '0x4D29a4C7e081299897071eAD909893B739B2229d'
 const marketplaceAddress = '0x94058cb70e10C146B73a112C2De1C446C5efc911'
 
@@ -1053,6 +1052,39 @@ function getItemsForAccount(account) {
     console.log(balances)
     return balances
   })
+}
+
+async function switchToBscTestNetwork() {
+  try {
+    await ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x61' }],
+    });
+  } catch (switchError) {
+    // This error code indicates that the chain has not been added to MetaMask.
+    if (switchError.code === 4902) {
+      try {
+        await ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: '0x61',
+              chainName: 'BSC Testnet',
+              nativeCurrency: {
+                name: 'BNB',
+                symbol: 'BNB',
+                decimals: 18,
+              },
+              rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545']
+            },
+          ],
+        });
+      } catch (addError) {
+        // handle "add" error
+      }
+    }
+    // handle other "switch" errors
+  }
 }
 
 function buy(id) {
