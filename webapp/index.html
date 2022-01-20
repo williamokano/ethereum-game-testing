@@ -8,10 +8,44 @@
 </head>
 
 <body>
-    <h1>PUMP YOUR BAG</h1>
-    <button onClick="buy(1)">Buy Pump Talisman, 0.001 BNB</button><br/>
-    <button onClick="buy(2)">Buy Super Boots, 0.002 BNB</button><br/>
-    <button onClick="buy(3)">Buy Time Warp Cape, 0.003 BNB</button><br/>
+    <h1>Simple ETH game for testing purposes</h1>
+    <p>This game runs on top of the BSC Test network and uses BNB to purchase items.</p>
+    <p>Claim your free BNB at Binance Testnet Faucet: <a href="https://testnet.binance.org/faucet-smart">https://testnet.binance.org/faucet-smart</a></p>
+    <h2>PUMP YOUR BAG</h2>
+    <table border="1px solid black">
+        <thead>
+            <tr>
+                <td>#</td>
+                <td>Description</td>
+                <td>Owned</td>
+                <td>Available</td>
+                <td></td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Gold talisman. Coin drop interval -25%</td>
+                <td id="item_1_owned">0</td>
+                <td id="item_1_available">0</td>
+                <td><button onClick="buy(1)">Buy Pump Talisman, 0.001 BNB</button></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Super boots. Speed +10%</td>
+                <td id="item_2_owned">0</td>
+                <td id="item_2_available">0</td>
+                <td><button onClick="buy(2)">Buy Super Boots, 0.002 BNB</button></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Time warp cape. Time +30%</td>
+                <td id="item_3_owned">0</td>
+                <td id="item_3_available">0</td>
+                <td><button onClick="buy(3)">Buy Time Warp Cape, 0.003 BNB</button><br/></td>
+            </tr>
+        </tbody>
+    </table>
 
     <script>
 
@@ -75,10 +109,30 @@
                 console.log(`Game loaded with item balance: ${balances}`)
 
                 configureParameters(balances)
+                updateOwnedBalances(balances)
+                updateAvailableBalances()
 
                 game = new Phaser.Game(config)
             })
         })
+
+        function updateBalancesOf(balances, type) {
+            for (i = 1; i <= 3; i++) {
+                let balance = i - 1
+                document.querySelector(`#item_${i}_${type}`).innerText = balances[balance]
+            }            
+        }
+
+        function updateOwnedBalances(balances) {
+            updateBalancesOf(balances, 'owned')
+        }
+
+
+        function updateAvailableBalances() {
+            getItemsForAccount(marketplaceAddress)
+                .then(balances => updateBalancesOf(balances, 'available'))
+        }
+
 
         function afterBuyCallback() {
             getItems().then(configureParameters)
@@ -96,6 +150,7 @@
 
             console.log(`Configured parameters`)
             console.table({...gameParameters, ...characterParameters, ...gameItems})
+            updateAvailableBalances()
         }
 
         // loading assets
